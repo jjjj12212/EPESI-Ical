@@ -3,17 +3,20 @@
 /**
  * ical.php
  * Genera file ical per importare calendario in Google Calendar 
- * rev 0.1 - 2013-09-11 : versione iniziale
- * rev 0.2 - 2013-09-22 : parametrizzati alcuni valori | bugfix
- * rev 0.3 - 2013-09-23 : inserito campo descrizione formattato
+ * rev 0.1 - 2013-09-11 : initial version
+ * rev 0.2 - 2013-09-22 : parametrized some values | bugfix
+ * rev 0.3 - 2013-09-23 : inserted description field formatted
  * rev 0.5 - 2013-09-25 : Make changes to work with the Ical Module and minor fixes
+ * rev 0.6 - 2013-09-28 : added status field and inserted an easy format way | added calendar name and description as configuration fields
  *
- * parametro richiesto: _employeeid
+ * parameter requested: _employeeid
  *
- * _me: =1 per generare meetings
- * _pc: =1 per generare phonecalls
- * _ts: =1 per generare tasks
+ * _me: =1 to generate meetings
+ * _pc: =1 to generate phonecalls
+ * _ts: =1 to generate tasks
  */ 
+
+define('VERSION','0.6');
 
 // Set headers
 header('Cache-Control: max-age=7200, private, must-revalidate');
@@ -23,30 +26,44 @@ header('Content-Disposition: attachment; filename=ical.ics');
 ob_start("writebuffer");
 
 
-/**
- * SQL server.
- */
+/* Database connection parameters */
 define('DATABASE_HOST', $_GET['srv']);
 define('DATABASE_USER', $_GET['usr']);
 define('DATABASE_PASSWORD', $_GET['pwd']);
 define('DATABASE_NAME', $_GET['db']);
 
-define('VERSION','0.3');
+/* Time Location of calendar */
 define('LOCATION', $_GET['loc']);
 
+
+/* Parameters to be used by SELECT statement */
 $LoginId = $_GET["_employeeid"];
 $tasks = ($_GET["_ts"]) && ($_GET["_ts"] == '1');
 $phoneCalls = ($_GET["_pc"]) && ($_GET["_pc"] == '1');
 $meetings = ($_GET["_me"]) && ($_GET["_me"] == '1');
 
 
+/* Calendar Name and Description */
+$calendarName = $_GET["calendarName"];
+$calendarDescription = $_GET["calendarDescription"];
+if (trim($calendarName) == "") {
+    $calendarName = "EPESI CRM Calendar";	
+}
+if (trim($calendarDescription) == "") {
+    $calendarDescription = "Meetings\, Phonecalls and Tasks from EPESI CRM";	
+}
+
+
+/* Retrieve emloyee Id from its username */
 $get_employeeid = mysql_query("SELECT `id` FROM `contact_data_1` WHERE `f_login` = $loginId") or die(mysql_error);
 $empId = mysql_result($get_employeeid, 0, 'id');
 
-/* imposto il fuso orario */
+
+/* Setting script timezone location */
 date_default_timezone_set(LOCATION);
 
 
+/* Connecting to database */
 $link = mysql_connect(DATABASE_HOST, DATABASE_USER, DATABASE_PASSWORD);
 if (!$link) {
     die('Could not connect: ' . mysql_error());
@@ -58,15 +75,16 @@ if (!$db_selected) {
 
 
 
+/* Create string for ical format */
 $strCalendar = "BEGIN:VCALENDAR\r\n" .
                "VERSION:2.0\r\n" .
-               "PRODID:-//Marcom Srl//EpesiCal " . VERSION . "//EN\r\n" .
+               "PRODID:-//EPESI-Ical//EpesiCal " . VERSION . "//EN\r\n" .
 			   "CALSCALE:GREGORIAN\r\n" .
                "METHOD:PUBLISH\r\n" .
-			   "X-WR-CALNAME:CRM Marcom S.r.l.\r\n" .
+			   "X-WR-CALNAME:" . prepareField($calendarName) . "\r\n" .
 			   "X-WR-TIMEZONE:" . LOCATION . "\r\n" .
-			   "X-WR-CALDESC:Scadenze ed appuntamenti Marcom Srl\r\n" .
-			   "X-PUBLISHED-TTL:PT1H\r\n" .
+			   "X-WR-CALDESC:" . prepareField($calendarName) . "\r\n" .
+			   "X-PUBLISHED-TTL:PT2H\r\n" .
 			   "BEGIN:VTIMEZONE\r\n" .
 			   "TZID:" . LOCATION . "\r\n" .
 			   "X-LIC-LOCATION:" . LOCATION . "\r\n" .
@@ -126,7 +144,7 @@ if ($tasks) {
 				  "DTSTAMP:" . $dtDateCreation . "\r\n" .
 				  "DTSTART:" . $dtDateStart . "\r\n" .
 				  "DTEND:" . $dtDateEnd . "\r\n" .
-				  "SUMMARY:TASK - " . prepareField($row['f_title']) . "\r\n" .
+				  "SUMMARY:" . sprintf('[%2$s] %1$s | %3$s', 'TASK', getStatus($row['f_status']), prepareField($row['f_subject'])) . "\r\n" .
 				  "DESCRIPTION:" . prepareField($row['f_description']) . "\r\n" .
 				  "END:VEVENT\r\n";
 		
@@ -173,7 +191,7 @@ if ($phoneCalls) {
 				  "DTSTAMP:" . $dtDateCreation . "\r\n" .
 				  "DTSTART:" . $dtDateStart . "\r\n" .
 				  "DTEND:" . $dtDateEnd . "\r\n" .
-				  "SUMMARY:PHONECALL - " . prepareField($row['f_subject']) . "\r\n" .
+				  "SUMMARY:" . sprintf('[%2$s] %1$s | %3$s', 'PHONECALL', getStatus($row['f_status']), prepareField($row['f_subject'])) . "\r\n" .
 				  "DESCRIPTION:" . prepareField($row['f_description']) . "\r\n" .
 				  "END:VEVENT\r\n";
 		
@@ -226,7 +244,7 @@ if ($meetings) {
 				  "DTSTAMP:" . $dtDateCreation . "\r\n" .
 				  "DTSTART:" . $dtDateStart . "\r\n" .
 				  "DTEND:" . $dtDateEnd . "\r\n" .
-				  "SUMMARY:MEETING - " . prepareField($row['f_title']) . "\r\n" .
+				  "SUMMARY:" . sprintf('[%2$s] %1$s | %3$s', 'MEETING', getStatus($row['f_status']), prepareField($row['f_subject'])) . "\r\n" .
 				  "DESCRIPTION:" . prepareField($row['f_description']) . "\r\n" .
 				  "END:VEVENT\r\n";
 		
@@ -253,8 +271,37 @@ function writebuffer($buffer) {
 }
 
 
-/** Funzioni di supporto **/
+/** Utility functions **/
 
+/* GetStatus: return status string from its index (CommonData) */
+function getStatus(istatus) {
+	
+	$status = "UNKNOWN";
+	switch (istatus) {
+	    case 0:
+	        $status = "OPEN";
+	        break;
+	    case 1:
+	        $status = "WORKING";
+	        break;
+	    case 2:
+	        $status = "WAITING";
+	        break;
+	    case 3:
+	        $status = "CLOSED";
+	        break;
+            case 4:
+	        $status = "CANCELLED";
+	        break;
+	    default:
+	    	$status = "UNKNOWN";
+	    	break;
+	}
+	return $status;
+}
+
+
+/* GetDatetime: return datetime string formatted in the right way from the one in EPESI database */
 function getDatetime($str) {
 	
 	$strTmp = $str;
@@ -265,6 +312,8 @@ function getDatetime($str) {
 	return $strTmp;
 }
 
+
+/* PrepareField: return string formatted in right way to be inserted in ical format */
 function prepareField($str) {
 
 	$strTmp = $str;
