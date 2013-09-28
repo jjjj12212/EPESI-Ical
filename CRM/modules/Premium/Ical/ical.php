@@ -36,6 +36,11 @@ define('DATABASE_NAME', $_GET['db']);
 define('LOCATION', $_GET['loc']);
 
 
+/* Domain used as event UID trail */
+define('DOMAIN', $_GET['domain']);
+
+
+
 /* Parameters to be used by SELECT statement */
 $LoginId = $_GET["_employeeid"];
 $tasks = ($_GET["_ts"]) && ($_GET["_ts"] == '1');
@@ -140,11 +145,11 @@ if ($tasks) {
 		$dtDateCreation = gmdate("Ymd", $iDateCreation) . "T" . gmdate("His", $iDateCreation) . "Z";
 			
 		$strTmp = "BEGIN:VEVENT\r\n" .
-				  "UID:" . "t" . str_pad($row['id'], 10, "0", STR_PAD_LEFT) . "@crm.marcomweb.it\r\n" .
+				  "UID:" . "t" . str_pad($row['id'], 10, "0", STR_PAD_LEFT) . "@" . DOMAIN . "\r\n" .
 				  "DTSTAMP:" . $dtDateCreation . "\r\n" .
 				  "DTSTART:" . $dtDateStart . "\r\n" .
 				  "DTEND:" . $dtDateEnd . "\r\n" .
-				  "SUMMARY:" . sprintf('[%2$s] %1$s | %3$s', 'TASK', getStatus($row['f_status']), prepareField($row['f_subject'])) . "\r\n" .
+				  "SUMMARY:" . sprintf('[%2$s] %1$s | ', 'TASK', getStatus($row['f_status'])) . prepareField($row['f_title']) . "\r\n" .
 				  "DESCRIPTION:" . prepareField($row['f_description']) . "\r\n" .
 				  "END:VEVENT\r\n";
 		
@@ -187,11 +192,11 @@ if ($phoneCalls) {
 		$dtDateCreation = gmdate("Ymd", $iDateCreation) . "T" . gmdate("His", $iDateCreation) . "Z";
 		
 		$strTmp = "BEGIN:VEVENT\r\n" .
-				  "UID:" . "p" . str_pad($row['id'], 10, "0", STR_PAD_LEFT) . "@crm.marcomweb.it\r\n" .
+				  "UID:" . "p" . str_pad($row['id'], 10, "0", STR_PAD_LEFT) . "@" . DOMAIN . "\r\n" .
 				  "DTSTAMP:" . $dtDateCreation . "\r\n" .
 				  "DTSTART:" . $dtDateStart . "\r\n" .
 				  "DTEND:" . $dtDateEnd . "\r\n" .
-				  "SUMMARY:" . sprintf('[%2$s] %1$s | %3$s', 'PHONECALL', getStatus($row['f_status']), prepareField($row['f_subject'])) . "\r\n" .
+				  "SUMMARY:" . sprintf('[%2$s] %1$s | ', 'PHONECALL', getStatus($row['f_status'])) . prepareField($row['f_subject']) . "\r\n" .
 				  "DESCRIPTION:" . prepareField($row['f_description']) . "\r\n" .
 				  "END:VEVENT\r\n";
 		
@@ -240,11 +245,11 @@ if ($meetings) {
 		$dtDateCreation = gmdate("Ymd", $iDateCreation) . "T" . gmdate("His", $iDateCreation) . "Z";
 		
 		$strTmp = "BEGIN:VEVENT\r\n" .
-				  "UID:" . "m" . str_pad($row['id'], 10, "0", STR_PAD_LEFT) . "@crm.marcomweb.it\r\n" .
+				  "UID:" . "m" . str_pad($row['id'], 10, "0", STR_PAD_LEFT) . "@" . DOMAIN . "\r\n" .
 				  "DTSTAMP:" . $dtDateCreation . "\r\n" .
 				  "DTSTART:" . $dtDateStart . "\r\n" .
 				  "DTEND:" . $dtDateEnd . "\r\n" .
-				  "SUMMARY:" . sprintf('[%2$s] %1$s | %3$s', 'MEETING', getStatus($row['f_status']), prepareField($row['f_subject'])) . "\r\n" .
+				  "SUMMARY:" . sprintf('[%2$s] %1$s | ', 'MEETING', getStatus) . prepareField($row['f_title']) . "\r\n" .
 				  "DESCRIPTION:" . prepareField($row['f_description']) . "\r\n" .
 				  "END:VEVENT\r\n";
 		
@@ -274,10 +279,10 @@ function writebuffer($buffer) {
 /** Utility functions **/
 
 /* GetStatus: return status string from its index (CommonData) */
-function getStatus(istatus) {
+function getStatus($istatus) {
 	
 	$status = "UNKNOWN";
-	switch (istatus) {
+	switch ($istatus) {
 	    case 0:
 	        $status = "OPEN";
 	        break;
