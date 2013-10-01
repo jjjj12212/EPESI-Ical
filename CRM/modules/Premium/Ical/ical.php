@@ -9,6 +9,7 @@
  * rev 0.5 - 2013-09-25 : Make changes to work with the Ical Module and minor fixes
  * rev 0.6 - 2013-09-28 : added status field and inserted an easy format way | added calendar name and description as configuration fields
  * rev 0.7 - 2013-09-29 : added VTODO | added SEQUENCE to notify update, based on latest modification
+ * rev 0.8 - 2013-10-01 : added uuid for GET request, remove other GET requests. get MySQL settings from CRM configurations. get user settings in control Panel
  *
  * parameter requested: _employeeid
  *
@@ -17,9 +18,7 @@
  * _ts: =1 to generate tasks
  */ 
 
-define('VERSION','0.7');
-define('LOCATION','Europe/Rome');
-define('DOMAIN','domain.it');
+define('VERSION','0.8');
 
 // Set headers
 header('Cache-Control: max-age=7200, private, must-revalidate');
@@ -27,28 +26,12 @@ header('Content-Type: text/calendar');
 header('Content-Disposition: attachment; filename=ical.ics');
 
 ob_start("writebuffer");
-
-
-/* Database connection parameters */
-define('DATABASE_HOST', $_GET['srv']);
-define('DATABASE_USER', $_GET['usr']);
-define('DATABASE_PASSWORD', $_GET['pwd']);
-define('DATABASE_NAME', $_GET['db']);
-
-/* Time Location of calendar */
-define('LOCATION', $_GET['loc']);
-
-
-/* Domain used as event UID trail */
-define('DOMAIN', $_GET['domain']);
+define('_VALID_ACCESS', 'ical Module');
+require_once("../../../data/config.php"); //get DB connection parameters
 
 
 
-/* Parameters to be used by SELECT statement */
-$LoginId = $_GET["_employeeid"];
-$tasks = ($_GET["_ts"]) && ($_GET["_ts"] == '1');
-$phoneCalls = ($_GET["_pc"]) && ($_GET["_pc"] == '1');
-$meetings = ($_GET["_me"]) && ($_GET["_me"] == '1');
+
 
 
 /* Calendar Name and Description */
@@ -62,15 +45,6 @@ if (trim($calendarDescription) == "") {
 }
 
 
-/* Retrieve emloyee Id from its username */
-$get_employeeid = mysql_query("SELECT `id` FROM `contact_data_1` WHERE `f_login` = $loginId") or die(mysql_error);
-$empId = mysql_result($get_employeeid, 0, 'id');
-
-
-/* Setting script timezone location */
-date_default_timezone_set(LOCATION);
-
-
 /* Connecting to database */
 $link = mysql_connect(DATABASE_HOST, DATABASE_USER, DATABASE_PASSWORD);
 if (!$link) {
@@ -81,7 +55,35 @@ if (!$db_selected) {
     die ('Can\'t use ' . DATABASE_NAME . ' : ' . mysql_error());
 }
 
+$check_hash = mysql_query("SELECT * FROM ical_hashlist WHERE hash = '".$_REQUEST['uid']."'");
+if(mysql_num_rows($check_hash) == 0)
+{
+ die("Invalid uid, Please use a different uid or generate a new one in Menu-\>My Settings-\>Control Panel-\>Calendar Export Settings");
+}
+//Get user Configurations
+$loginId = mysql_result($check_hash, 0, "logged_user_id");
+$meetings = mysql_result($check_hash, 0, "_me");
+$phoneCalls = mysql_result($check_hash, 0, "_pc");
+$tasks = mysql_result($check_hash, 0, "_ts");
+$domain = mysql_result($check_hash, 0, "domain");
+$location = mysql_result($check_hash, 0, "location");
+/* Domain used as event UID trail */
+if($domain != '' || $domain != ' ')
+{
+ define('DOMAIN', $domain);
+}
+else
+{
+ define('DOMAIN','domain.it');
+}
 
+/* Time Location of calendar */
+define('LOCATION', $location);
+/* Setting script timezone location */
+date_default_timezone_set(LOCATION);
+
+$get_employeeid = mysql_query("SELECT `id` FROM `contact_data_1` WHERE `f_login` = $loginId") or die(mysql_error);
+$empId = mysql_result($get_employeeid, 0, 'id');
 
 /* Create string for ical format */
 $strCalendar = "BEGIN:VCALENDAR\r\n" .
@@ -116,7 +118,7 @@ $strCalendar = "BEGIN:VCALENDAR\r\n" .
 			   
 // ***** TASK *****
 // Perform Query
-if ($tasks) {
+if ($tasks == 1) {
 	$query = "SELECT `user_login`.`login`," .
 			 "       `task_data_1`.`id`, `task_data_1`.`f_title`, `task_data_1`.`created_on`, `task_data_1`.`f_deadline`, `task_data_1`.`f_status`, `task_data_1`.`f_description`, `task_data_1`.`f_priority`" .
 			 " FROM `task_data_1`" . 
@@ -177,7 +179,7 @@ if ($tasks) {
 
 // ***** PHONECALL *****
 // Perform Query
-if ($phoneCalls) {
+if ($phoneCalls == 1) {
 	$query = "SELECT `user_login`.`login`," .
 			 "       `phonecall_data_1`.`id`, `phonecall_data_1`.`f_subject`, `phonecall_data_1`.`created_on`, `phonecall_data_1`.`f_date_and_time`, `phonecall_data_1`.`f_status`, `phonecall_data_1`.`f_description`, `phonecall_data_1`.`f_priority`" .
 			 " FROM `phonecall_data_1`" . 
@@ -238,7 +240,7 @@ if ($phoneCalls) {
 
 // ***** MEETINGS *****
 // Perform Query
-if ($meetings) {
+if ($meetings == 1) {
 	$query = "SELECT `user_login`.`login`," .
 			 "       `crm_meeting_data_1`.`id`, `crm_meeting_data_1`.`f_title`, `crm_meeting_data_1`.`created_on`, `crm_meeting_data_1`.`f_date`, `crm_meeting_data_1`.`f_time`, `crm_meeting_data_1`.`f_duration`, `crm_meeting_data_1`.`f_status`, `crm_meeting_data_1`.`f_description`, `crm_meeting_data_1`.`f_priority`" .
 			 " FROM `crm_meeting_data_1`" . 
