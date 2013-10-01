@@ -61,7 +61,7 @@ if($mysqli->num_rows == 0)
 $row = $mysqli->fetch_assoc();
 $loginId = $row["logged_user_id"];
 $meetings = $row["_me"];
-$phoneCalls = $row[$check_hash, 0, "_pc"];
+$phoneCalls = $row["_pc"];
 $tasks = $row["_ts"];
 $domain = $row["domain"];
 $location = $row["location"];
