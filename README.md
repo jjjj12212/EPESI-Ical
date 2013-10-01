@@ -18,10 +18,9 @@ How to Install:
 
 How to Set it up:
 
-1. on your EPESI CRM, login as the Admin user and go to the Administration Menu
-2. under the "Server Configuration" section, click on "Ical Export Settings"
-3. Enter your CRM MySQL Configurations and please note: you need a user account with read access to your database
-4. Once finished, click Save, then Back
+1. Go to Menu->My Settings->Control Panel->Calendar Export Settings
+2. Select which items you want to export and type in your buisness domain if any.
+3. Once finished, click Save
 
 =============================================
 
