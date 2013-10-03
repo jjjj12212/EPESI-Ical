@@ -53,12 +53,12 @@ if ($mysqli->connect_errno) {
 
 
 $check_hash = $mysqli->query("SELECT * FROM ical_hashlist WHERE hash = '".$_REQUEST['uid']."'");
-if($mysqli->num_rows == 0)
+if($check_hash->num_rows == 0)
 {
- die("Invalid uid, Please use a different uid or generate a new one in Menu-\>My Settings-\>Control Panel-\>Calendar Export Settings");
+ die("Invalid uid, Please use a different uid or generate a new one in Menu-\>My Settings-\>Control Panel-\>Calendar Export Settings".$mysqli->error);
 }
 //Get user Configurations
-$row = $mysqli->fetch_assoc();
+$row = $check_hash->fetch_assoc();
 $loginId = $row["logged_user_id"];
 $meetings = $row["_me"];
 $phoneCalls = $row["_pc"];

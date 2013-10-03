@@ -13,9 +13,9 @@ class Premium_Ical extends Module { // Note, how the class' name reflects module
   }
 	public function settings()
 	{
-
+		
 		$form = $this->init_module('Libs/QuickForm');
-
+	
 		//Form Layout
 		$form->addElement('header',null, __('Ical Export'));
 		$form->addElement('checkbox','_me', __('Meetings'));
@@ -25,7 +25,10 @@ class Premium_Ical extends Module { // Note, how the class' name reflects module
 		Base_ActionBarCommon::add('back', __('Back'), $this->create_main_href("Base_User_Settings"));
                 Base_ActionBarCommon::add('save', __('Save'), $form->get_submit_form_href());
 		 if($form->getSubmitValue('submited') && $form->validate() && $form->process(array(&$this,'submit_settings'))) {
-                        Base_StatusBarCommon::message(__('Settings saved'));
+			$usr = Acl::get_user();
+		        $get_hash = DB::Execute("select hash FROM ical_hashlist WHERE logged_user_id = $usr");
+			$hash = $get_hash->fields['hash'];	
+                        Base_StatusBarCommon::message(__('Settings saved, Your Unique Identifier is <br/>'.$hash));
                 }
                 $form->display();	
 	}
