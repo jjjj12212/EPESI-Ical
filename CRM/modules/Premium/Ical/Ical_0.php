@@ -13,9 +13,19 @@ class Premium_Ical extends Module { // Note, how the class' name reflects module
   }
 	public function settings()
 	{
-		
 		$form = $this->init_module('Libs/QuickForm');
-	
+		$usr = Acl::get_user();
+	        $get_hash = DB::Execute("select * FROM ical_hashlist WHERE logged_user_id = $usr");
+		if(!$get_hash->EOF)
+		{
+		 $d = array();
+		 $d['_me'] = $get_hash->fields['_me'];
+		 $d['_pc'] = $get_hash->fields['_pc'];
+		 $d['_ts'] = $get_hash->fields['_ts'];
+		 $d['domain'] = $get_hash->fields['domain'];
+		 $form->setDefaults($d); 
+		}
+			
 		//Form Layout
 		$form->addElement('header',null, __('Ical Export'));
 		$form->addElement('checkbox','_me', __('Meetings'));
