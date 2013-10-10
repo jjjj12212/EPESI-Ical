@@ -40,7 +40,7 @@ class CRM_Calendar extends Module {
 	}
 
 	public function body($args = array()) {
-				$ical = $this->pack_module('Samco/Ical', null, null, 'L');
+				$ical = $this->pack_module('Premium/Ical', null, null, 'L');
 		$ev_mod = $this->init_module('CRM/Calendar/Event');
 		$ev_mod->help('Calendar Help','main');
 
