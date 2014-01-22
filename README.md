@@ -33,3 +33,5 @@ Go to Menu->CRM->Calendar and click on "Export Calendar" to export your calendar
 Troubleshoot:
 
 If your calendar is having issues loading the .ics file, read the file using Notepad or any text editor program to view the file, it will then display any SQL errors that it had or you do not have any entries in your calendar.
+
+If you have detected Bugs, please Post in the Issues.
