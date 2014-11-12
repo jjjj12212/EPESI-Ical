@@ -11,7 +11,7 @@ class Premium_IcalInstall extends ModuleInstall {
 		if($ret) $ret = Variable::set('mysql_username', 'root');
 		if($ret) $ret = Variable::set('mysql_password', 'password');
 		DB::CreateTable("ical_hashlist", "hash C(64) KEY, logged_user_id I(5) NOTNULL, _me I1, _pc I1, _ts I1, location C(25), domain C(25)"); 
-		Utils_RecordBrowserCommon::register_processing_callback('crm_calendar',array('Samco_IcalCommon','add_action_bar'));
+		Utils_RecordBrowserCommon::register_processing_callback('crm_calendar',array('Premium_IcalCommon','add_action_bar'));
 		return $ret; // Return false on success and false on failure
 	}
 	

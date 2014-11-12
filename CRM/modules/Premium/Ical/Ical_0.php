@@ -9,7 +9,7 @@ class Premium_Ical extends Module { // Note, how the class' name reflects module
           $usr = ACL::get_user();
           $get_hash = DB::Execute("SELECT hash FROM ical_hashlist WHERE logged_user_id = $usr");
 
-		Base_ActionBarCommon::add('print',__('Export Calendar'), "href='modules/Samco/Ical/ical.php?uid=".$get_hash->fields['hash']."'");
+		Base_ActionBarCommon::add('print',__('Export Calendar'), "href='modules/Premium/Ical/ical.php?uid=".$get_hash->fields['hash']."'");
   }
 	public function settings()
 	{
